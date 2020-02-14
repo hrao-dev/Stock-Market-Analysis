@@ -1,0 +1,129 @@
+Sub Stock_Analyzer()
+         
+   Dim ws As Worksheet
+   Dim start_ws As Worksheet
+
+   ' Mark the place of the first sheet in the Workbook to return to 
+   Set start_ws = ActiveSheet
+
+  For Each ws In ActiveWorkbook.Worksheets
+    ' Activate the current work sheet 
+      ws.Activate
+      Dim ticker_symbol As String
+      Dim yearly_change As Double
+      Dim open_price As Double
+      Dim close_price As Double
+      Dim same_stock_count As Long
+      Dim last_row As Long
+      Dim last_col As Long
+      Dim summary_row As Long
+      Dim lastrow_percent_change As Long
+
+    ' Initialize the different variables
+      yearly_change = 0
+      open_price = 0
+      close_price = 0
+      total_stock_vol = 0
+      same_stock_count = 2
+      summary_row = 2
+      percent_change = 0
+      greatest_stock_percent = 0
+      lowest_stock_percent = 0
+      greatest_total_stock = 0
+   
+   ' Define and insert the new columns
+      Range("J:M").EntireColumn.Insert
+      Range("J1").Value = "Ticker"
+      Range("K1").Value = "Yearly Change"
+      Range("L1").Value = "Percent Change"
+      Range("M1").Value = "Total Stock Volume"
+
+    ' Find the last row in the work sheet
+      last_row = Cells(Rows.Count, 1).End(xlUp).Row
+
+    ' Loop through all stocks to find the opening price and the closing price 
+      For i = 2 To last_row
+        open_price = Cells(same_stock_count, 3).Value
+        close_price = Cells(i, 6).Value
+
+    ' Check if we are still within the same stock brand, if it is not...
+    
+        If Cells(i + 1, 1).Value <> Cells(i, 1).Value Then
+          ticker_symbol = Cells(i, 1).Value
+          open_price = Cells(i, 3).Value
+      
+        If (open_price = 0) Then
+            percent_change = 0
+            yearly_change = 0     
+        Else
+            yearly_change = close_price - open_price
+            percent_change = yearly_change / open_price
+        End If
+    
+        Cells(summary_row, 10).Value = ticker_symbol
+        Cells(summary_row, 11).Value = yearly_change
+        Cells(summary_row, 12).Value = percent_change
+        Cells(summary_row, 12).NumberFormat = "0.00%"
+      
+      ' Marking/Highlighting cells with positive change in green and negative change in red
+        If (yearly_change >= 0) Then
+           Cells(summary_row, 11).Interior.ColorIndex = 4
+        Else
+           Cells(summary_row, 11).Interior.ColorIndex = 3
+        End If
+    
+      ' Calculating total stock volume for each stock
+        Cells(summary_row, 13).Value = total_stock_vol
+        summary_row = summary_row + 1
+        yearly_change = 0
+        total_stock_vol = Cells(same_stock_count, 7).Value
+      
+        Else
+            same_stock_count = same_stock_count + 1
+            close_price = Cells(same_stock_count, 6).Value
+            total_stock_vol = total_stock_vol + Cells(same_stock_count, 7).Value
+
+        End If
+      Next i
+
+      With ws
+        lastrow_percent_change = .Cells(.Rows.Count, "L").End(xlUp).Row
+      End With
+
+ ' Bonus - Defining and Inserting additional columns 
+      Range("P:S").EntireColumn.Insert
+      Range("Q1").Value = "Ticker"
+      Range("R1").Value = "Value"
+      Cells(2, 16).Value = "Greatest % Increase"
+      Cells(3, 16).Value = "Greatest % Decrease"
+      Cells(4, 16).Value = "Greatest Total Volume"
+      ws.Cells.EntireColumn.AutoFit
+   
+      greatest_stock_percent = Application.WorksheetFunction.Max(Columns("L"))
+      Cells(2, 18).Value = greatest_stock_percent
+      Cells(2, 18).NumberFormat = "0.00%"
+      least_stock_percent = Application.WorksheetFunction.Min(Columns("L"))
+      Cells(3, 18).Value = Application.WorksheetFunction.Min(Columns("L"))
+      Cells(3, 18).NumberFormat = "0.00%"
+      greatest_total_stock = Application.WorksheetFunction.Max(Columns("M"))
+      Cells(4, 18).Value = Application.WorksheetFunction.Max(Columns("M"))
+   
+    ' Loop through all the values to calculate the maximum and minimum 
+      For j = 2 To lastrow_percent_change
+      If Cells(j, 12).Value = greatest_stock_percent Then
+                Cells(2, 17).Value = Cells(j, 10).Value
+      ElseIf Cells(j, 12).Value = least_stock_percent Then
+                Cells(3, 17).Value = Cells(j, 10).Value
+      End If
+      If Cells(j, 13).Value = greatest_total_stock Then
+                  Cells(4, 17).Value = Cells(j, 10).Value
+      End If
+
+      Next j
+
+  Next ws
+
+' Return to the first sheet of the workbook
+start_ws.Activate
+
+End Sub
